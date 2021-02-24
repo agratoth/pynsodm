@@ -43,7 +43,6 @@ class Storage:
     self._driver.table(table_name).index_wait(index).run(self._connection)
 
   def _init_table(self, table_name, indexes = []):
-    print(self._driver.table_list())
     table_list = self._driver.table_list().run(self._connection)
   
     if table_name not in table_list:
@@ -69,7 +68,7 @@ class Storage:
       for relation_field in subclass.get_relation_fields():
         relation_field_obj = getattr(subclass, relation_field)
         if relation_field_obj.backfield:
-          setattr(relation_field_obj.relation_class, relation_field_obj.backfield, OTOResolver(subclass))
+          setattr(relation_field_obj.relation_class, relation_field_obj.backfield, relation_field_obj.resolver(subclass))
 
   def reconnect(self):
     self._connection = None
@@ -84,7 +83,7 @@ class Storage:
       obj_data.pop(rel_field)
       obj_data[rel_field] = rel_object.id
 
-    result = self._driver.table(data_obj.table_name).insert(obj_data).run(self._connection)
+    result = self._driver.table(data_obj.get_table_name()).insert(obj_data).run(self._connection)
 
     if 'generated_keys' in result and len(result['generated_keys']) == 1:
       return result['generated_keys'][0]
@@ -98,10 +97,16 @@ class Storage:
       obj_data.pop(rel_field)
       obj_data[rel_field] = rel_object.id
 
-    self._driver.table(data_obj.table_name).filter({'id':data_obj.id}).update(obj_data).run(self._connection)
+    self._driver.table(data_obj.get_table_name()).filter({'id':data_obj.id}).update(obj_data).run(self._connection)
 
   def get(self, table_name, obj_id):
     return self._driver.table(table_name).get(obj_id).run(self._connection)
 
   def find(self, table_name, fil):
     return self._driver.table(table_name).filter(fil).run(self._connection)
+
+  def delete(self, table_name, fil):
+    result = self._driver.table(table_name).filter(fil).delete().run(self._connection)
+    if 'deleted' in result and result['deleted'] > 0:
+      return True
+    return False

@@ -5,7 +5,7 @@ from rethinkdb import r
 from pytest_docker_tools import container, fetch
 
 from pynsodm.rethinkdb_ext import Storage, BaseModel
-from pynsodm.fields import StringField, OTORelation, OTOResolver
+from pynsodm.fields import StringField, OTORelation, OTMRelation
 from pynsodm.valids import valid_uuid
 from pynsodm.exceptions import NonexistentIDException
 
@@ -198,3 +198,138 @@ def test_one_to_one_relation_backfield(mock_server):
   get_idcard = IDCard.get(idcard.id)
 
   assert get_idcard.person.first_name == 'John'
+
+def test_one_to_many_relation(mock_server):
+  class Person(BaseModel):
+    table_name = 'persons'
+
+    first_name = StringField()
+    last_name = StringField()
+
+  class Bike(BaseModel):
+    table_name = 'bikes'
+
+    model = StringField()
+    owner = OTMRelation(Person, backfield='bikes')
+
+  storage.reconnect()
+
+  person1 = Person(first_name='John', last_name='Doe')
+  person1.save()
+
+  person2 = Person(first_name='Jane', last_name='Doe')
+  person2.save()
+
+  bike1 = Bike(model='Altair MTB HT 26 1.0', owner=person1)
+  bike1.save()
+
+  bike2 = Bike(model='Bicystar Explorer 26"', owner=person1)
+  bike2.save()
+
+  bike3 = Bike(model='Horn Forest FHD 7.1 27.5', owner=person2)
+  bike3.save()
+
+  get_person1 = Person.get(person1.id)
+  get_person2 = Person.get(person2.id)
+
+  assert len(get_person1.bikes) == 2 and len(get_person2.bikes) == 1
+
+def test_one_to_many_relation_id_checking(mock_server):
+  class Person(BaseModel):
+    table_name = 'persons'
+
+    first_name = StringField()
+    last_name = StringField()
+
+  class Bike(BaseModel):
+    table_name = 'bikes'
+
+    model = StringField()
+    owner = OTMRelation(Person, backfield='bikes')
+
+  storage.reconnect()
+
+  person1 = Person(first_name='John', last_name='Doe')
+  person1.save()
+
+  person2 = Person(first_name='Jane', last_name='Doe')
+  person2.save()
+
+  bike1 = Bike(model='Altair MTB HT 26 1.0', owner=person1)
+  bike1.save()
+
+  bike2 = Bike(model='Bicystar Explorer 26"', owner=person1)
+  bike2.save()
+
+  bike3 = Bike(model='Horn Forest FHD 7.1 27.5', owner=person2)
+  bike3.save()
+
+  bike_ids = []
+  bike_ids.append(bike1.id)
+  bike_ids.append(bike2.id)
+
+  get_person1 = Person.get(person1.id)
+
+  assert sorted(bike_ids) == sorted([b.id for b in get_person1.bikes])
+
+def test_complex_relations(mock_server):
+  class IDCard(BaseModel):
+    table_name = 'idcards'
+
+    number = StringField()
+
+  class Person(BaseModel):
+    table_name = 'persons'
+
+    first_name = StringField()
+    last_name = StringField()
+    idcard = OTORelation(IDCard, backfield='person')
+
+  class Bike(BaseModel):
+    table_name = 'bikes'
+
+    model = StringField()
+    number = StringField()
+    owner = OTMRelation(Person, backfield='bikes')
+
+  storage.reconnect()
+
+  idcard1 = IDCard(number='test123')
+  idcard1.save()
+
+  idcard2 = IDCard(number='test456')
+  idcard2.save()
+
+  person1 = Person(first_name='John', last_name='Doe', idcard=idcard1)
+  person1.save()
+
+  person2 = Person(first_name='Jane', last_name='Doe', idcard=idcard2)
+  person2.save()
+
+  bike1 = Bike(model='Altair MTB HT 26 1.0', number='bike123', owner=person1)
+  bike1.save()
+
+  bike2 = Bike(model='Bicystar Explorer 26"', number='bike456', owner=person1)
+  bike2.save()
+
+  bike3 = Bike(model='Horn Forest FHD 7.1 27.5', number='bike789', owner=person2)
+  bike3.save()
+
+  finded_bike1 = Bike.find(number='bike123')[0]
+  finded_bike2 = Bike.find(number='bike789')[0]
+
+  assert finded_bike1.owner.idcard.number == 'test123' and finded_bike2.owner.idcard.number == 'test456'
+
+def test_delete_object(mock_server):
+  class Test123(BaseModel):
+    pass
+
+  storage.reconnect()
+
+  test = Test123()
+  test.save()
+
+  Test123.delete(id=test.id)
+
+  with pytest.raises(NonexistentIDException):
+    Test123.get(test.id)

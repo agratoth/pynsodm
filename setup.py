@@ -4,12 +4,20 @@ from setuptools import setup
 setup(
     name='pynsodm',
     zip_safe=True,
-    version='0.2.0',
+    version='0.3.0',
     description='Smart ODM for NoSQL (RethinkDB, Redis, etc.)',
     url='https://github.com/agratoth/pynsodm',
     maintainer='Anton Berdnikov',
     maintainer_email='agratoth@yandex.ru',
-    packages=['pynsodm'],
+    packages=[
+      'pynsodm',
+      'pynsodm.exceptions',
+      'pynsodm.fields',
+      'pynsodm.handlers',
+      'pynsodm.json_ext',
+      'pynsodm.rethinkdb_ext',
+      'pynsodm.valids',
+    ],
     package_dir={'pynsodm': 'pynsodm'},
     install_requires=[
       'rethinkdb>=2.4.8', 
