@@ -1,3 +1,9 @@
 .*
 !.git*
 __pycache__
+
+build
+dist
+*.egg*
+
+publish.sh
