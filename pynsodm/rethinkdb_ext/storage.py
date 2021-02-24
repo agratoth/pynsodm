@@ -85,3 +85,9 @@ class Storage:
     obj_data.pop('id')
 
     self._driver.table(data_obj.table_name).filter({'id':data_obj.id}).update(obj_data).run(self._connection)
+
+  def get(self, table_name, obj_id):
+    return self._driver.table(table_name).get(obj_id).run(self._connection)
+
+  def find(self, table_name, fil):
+    return self._driver.table(table_name).filter(fil).run(self._connection)

@@ -16,7 +16,7 @@ class DatetimeField(BaseField):
     if not value:
       self.value = self._timezone.localize(datetime.utcnow())
     else:
-      self.value = self._timezone.localize(value)
+      self.value = self._timezone.localize(value) if not value.tzinfo else value
 
   def __get__(self, obj, type):
     if not obj:
