@@ -1,19 +1,9 @@
 PyNSODM (Python NoSQL Object-Document Mapper)
 =======
 
-|PyPI| |Python| |Downloads|
-
-.. |PyPI| image:: https://img.shields.io/pypi/v/pynsodm
-    :target: https://pypi.org/project/pynsodm
-    :alt: PyPI
-
-.. |Python| image:: https://img.shields.io/pypi/pyversions/pynsodm
-    :target: https://pypi.org/project/pynsodm
-    :alt: PyPI - Python Version
-
-.. |Downloads| image:: https://img.shields.io/pypi/dm/pynsodm
-    :target: https://pypi.org/project/pynsodm
-    :alt: PyPI - Downloads
+[![PyPI](https://img.shields.io/pypi/v/pynsodm)](https://pypi.org/project/pynsodm)
+[![Python](https://img.shields.io/pypi/pyversions/pynsodm)](https://pypi.org/project/pynsodm)
+[![Coverage Status](https://coveralls.io/repos/github/agratoth/pynsodm/badge.svg?branch=master)](https://coveralls.io/github/agratoth/pynsodm?branch=master)
 
 Simple and powerful ODM for various NoSQL databases (RethinkDB, soon - Clickhouse, Redis, MongoDB, InfluxDB, etc.)
 
