@@ -3,7 +3,7 @@ import os
 from rethinkdb import RethinkDB
 
 from pynsodm.rethinkdb_ext import BaseModel
-from pynsodm.fields import BaseField, DatetimeField, IDField
+from pynsodm.fields import BaseField, DatetimeField, IDField, OTOResolver
 
 
 class Storage:
@@ -66,6 +66,10 @@ class Storage:
       self._init_table(table_name, subclass.get_index_fields())
 
       subclass.set_storage(self)
+      for relation_field in subclass.get_relation_fields():
+        relation_field_obj = getattr(subclass, relation_field)
+        if relation_field_obj.backfield:
+          setattr(relation_field_obj.relation_class, relation_field_obj.backfield, OTOResolver(subclass))
 
   def reconnect(self):
     self._connection = None
@@ -75,6 +79,11 @@ class Storage:
     obj_data = data_obj.dictionary
     obj_data.pop('id')
 
+    for rel_field in data_obj.get_relation_fields():
+      rel_object = obj_data.get(rel_field)
+      obj_data.pop(rel_field)
+      obj_data[rel_field] = rel_object.id
+
     result = self._driver.table(data_obj.table_name).insert(obj_data).run(self._connection)
 
     if 'generated_keys' in result and len(result['generated_keys']) == 1:
@@ -83,6 +92,11 @@ class Storage:
   def update(self, data_obj):
     obj_data = data_obj.modified_dictionary
     obj_data.pop('id')
+
+    for rel_field in obj.get_relation_fields():
+      rel_object = obj_data.get(rel_field)
+      obj_data.pop(rel_field)
+      obj_data[rel_field] = rel_object.id
 
     self._driver.table(data_obj.table_name).filter({'id':data_obj.id}).update(obj_data).run(self._connection)
 

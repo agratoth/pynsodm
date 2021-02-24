@@ -7,6 +7,8 @@ class BaseField:
     self._is_field = kwargs.get('is_field', True)
     self._is_primary = kwargs.get('is_primary', False)
     self._is_sensitive = kwargs.get('is_sensitive', False)
+    self._is_relation = kwargs.get('is_relation', False)
+    self._is_resolver = kwargs.get('is_resolver', False)
     self._valid = kwargs.get('valid', None)
     self._handler = kwargs.get('handler', None)
     self._value = None
@@ -26,6 +28,12 @@ class BaseField:
 
   @property
   def is_sensitive(self) -> bool: return self._is_sensitive
+
+  @property
+  def is_relation(self) -> bool: return self._is_relation
+
+  @property
+  def is_resolver(self) -> bool: return self._is_resolver
 
   @property
   def value(self): return self._value

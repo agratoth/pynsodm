@@ -5,7 +5,7 @@ from rethinkdb import r
 from pytest_docker_tools import container, fetch
 
 from pynsodm.rethinkdb_ext import Storage, BaseModel
-from pynsodm.fields import StringField
+from pynsodm.fields import StringField, OTORelation, OTOResolver
 from pynsodm.valids import valid_uuid
 from pynsodm.exceptions import NonexistentIDException
 
@@ -146,3 +146,55 @@ def test_find_objects_with_id_checking(mock_server):
   finded_ids = [u.id for u in finded_users]
   
   assert sorted(ids) == sorted(finded_ids)
+
+def test_one_to_one_relation(mock_server):
+  class IDCard(BaseModel):
+    table_name = 'idcards'
+
+    number = StringField()
+
+  class Person(BaseModel):
+    table_name = 'persons'
+
+    first_name = StringField()
+    last_name = StringField()
+
+    idcard = OTORelation(IDCard)
+
+  storage.reconnect()
+
+  idcard = IDCard(number='test123')
+  idcard.save()
+
+  person = Person(first_name='John', last_name='Doe', idcard=idcard)
+  person.save()
+
+  get_person = Person.get(person.id)
+
+  assert get_person.idcard.number == 'test123'
+
+def test_one_to_one_relation_backfield(mock_server):
+  class IDCard(BaseModel):
+    table_name = 'idcards'
+
+    number = StringField()
+
+  class Person(BaseModel):
+    table_name = 'persons'
+
+    first_name = StringField()
+    last_name = StringField()
+
+    idcard = OTORelation(IDCard, backfield='person')
+
+  storage.reconnect()
+
+  idcard = IDCard(number='test123')
+  idcard.save()
+
+  person = Person(first_name='John', last_name='Doe', idcard=idcard)
+  person.save()
+
+  get_idcard = IDCard.get(idcard.id)
+
+  assert get_idcard.person.first_name == 'John'

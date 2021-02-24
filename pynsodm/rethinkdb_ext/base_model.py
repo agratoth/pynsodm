@@ -18,6 +18,10 @@ class BaseModel:
     for field_name, field_value in self.get_fields_values().items():
       self.fields[field_name] = copy.deepcopy(field_value)
 
+    for resolver_name in self.get_resolver_fields():
+      resolver_value = getattr(self.__class__, resolver_name)
+      self.fields[resolver_name] = copy.deepcopy(resolver_value)
+
     for field_name, field_value in kwargs.items():
       if field_name in dir(self):
         setattr(self, field_name, field_value)
@@ -70,6 +74,23 @@ class BaseModel:
     return [k for k,v in cls.get_fields_values().items() if not v.is_sensitive]
 
   @classmethod
+  def get_relation_fields(cls):
+    return [k for k,v in cls.get_fields_values().items() if v.is_relation]
+
+  @classmethod
+  def get_resolver_fields(cls):
+    fields = dir(cls)
+    result = []
+
+    for field in fields:
+      field_value = getattr(cls, field)
+
+      if 'is_resolver' in dir(field_value):
+        if field_value.is_resolver:
+          result.append(field)
+    return result
+
+  @classmethod
   def get_modified_fields(cls):
     return [k for k,v in cls.get_fields_values().items() if v.is_modified]
 
@@ -90,7 +111,20 @@ class BaseModel:
     if not data:
       raise NonexistentIDException()
 
-    return cls.from_dictionary(data, sensitive_fields=True)
+    get_obj = cls.from_dictionary(data, sensitive_fields=True)
+
+    for resolver_field in cls.get_resolver_fields():
+      resolver_field_obj = getattr(cls, resolver_field)
+      
+      for parent_relation_field in resolver_field_obj.relation_class.get_relation_fields():
+        parent_relation_field_obj = getattr(resolver_field_obj.relation_class, parent_relation_field)
+        if parent_relation_field_obj.relation_class == cls:
+          data = [elem for elem in cls.storage.find(resolver_field_obj.relation_class.table_name, {parent_relation_field:get_obj.id})]
+          if len(data) > 0:
+            parent = resolver_field_obj.relation_class(**dict(data[0]))
+            setattr(get_obj, resolver_field, parent)
+    
+    return get_obj
 
   @classmethod
   def find(cls, **fil):

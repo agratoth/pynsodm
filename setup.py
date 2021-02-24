@@ -4,7 +4,7 @@ from setuptools import setup
 setup(
     name='pynsodm',
     zip_safe=True,
-    version='0.1.0',
+    version='0.2.0',
     description='Smart ODM for NoSQL (RethinkDB, Redis, etc.)',
     url='https://github.com/agratoth/pynsodm',
     maintainer='Anton Berdnikov',
