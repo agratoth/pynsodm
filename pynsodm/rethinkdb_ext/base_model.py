@@ -107,7 +107,7 @@ class BaseModel:
 
   @classmethod
   def get(cls, id):
-    data = cls.storage.get(cls.table_name, id)
+    data = cls.storage.get(cls.get_table_name(), id)
     if not data:
       raise NonexistentIDException()
 
@@ -119,18 +119,28 @@ class BaseModel:
       for parent_relation_field in resolver_field_obj.relation_class.get_relation_fields():
         parent_relation_field_obj = getattr(resolver_field_obj.relation_class, parent_relation_field)
         if parent_relation_field_obj.relation_class == cls:
-          data = [elem for elem in cls.storage.find(resolver_field_obj.relation_class.table_name, {parent_relation_field:get_obj.id})]
+          data = [elem for elem in cls.storage.find(resolver_field_obj.relation_class.get_table_name(), {parent_relation_field:get_obj.id})]
           if len(data) > 0:
-            parent = resolver_field_obj.relation_class(**dict(data[0]))
-            setattr(get_obj, resolver_field, parent)
+            if not resolver_field_obj.is_multiple:
+              parent = resolver_field_obj.relation_class(**dict(data[0]))
+              setattr(get_obj, resolver_field, parent)
+            else:
+              elements = []
+              for row in data:
+                elements.append(resolver_field_obj.relation_class(**dict(row)))
+              setattr(get_obj, resolver_field, elements)
     
     return get_obj
 
   @classmethod
   def find(cls, **fil):
-    data = cls.storage.find(cls.table_name, fil)
+    data = cls.storage.find(cls.get_table_name(), fil)
 
     return [cls.from_dictionary(row, sensitive_fields=True) for row in data]
+
+  @classmethod
+  def delete(cls, **fil):
+    return cls.storage.delete(cls.get_table_name(), fil)
 
   @property
   def dictionary(self):

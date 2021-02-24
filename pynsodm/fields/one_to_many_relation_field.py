@@ -1,12 +1,12 @@
 from .base_field import BaseField
-from .one_to_one_resolver_field import OTOResolver
+from .one_to_many_resolver_field import OTMResolver
 
 
-class OTORelation(BaseField):
+class OTMRelation(BaseField):
   def __init__(self, relation_class, backfield=None, **kwargs):
     self._relation_class = relation_class
     self._backfield = backfield
-    self._resolver = OTOResolver
+    self._resolver = OTMResolver
 
     kwargs['is_relation'] = True
 
