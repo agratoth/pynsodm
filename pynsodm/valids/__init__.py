@@ -1,1 +1,1 @@
-from .strings import valid_email
+from .strings import valid_email, valid_uuid

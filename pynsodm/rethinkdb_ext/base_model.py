@@ -1,14 +1,38 @@
+import copy
+
 from pynsodm.fields import BaseField, IDField, DatetimeField
+from pynsodm.exceptions import NonexistentIDException
 
 
 class BaseModel:
-
   table_name: str = None
   storage = None
 
   id = IDField()
-  created = DatetimeField(is_index=True)
-  updated = DatetimeField(is_index=True)
+  created = DatetimeField(is_index=True, is_sensitive=True)
+  updated = DatetimeField(is_index=True, is_sensitive=True)
+
+  def __init__(self, **kwargs):
+    self.fields = {}
+
+    for field_name, field_value in self.get_fields_values().items():
+      self.fields[field_name] = copy.deepcopy(field_value)
+
+    for field_name, field_value in kwargs.items():
+      if field_name in dir(self):
+        setattr(self, field_name, field_value)
+
+  @classmethod
+  def from_dictionary(cls, data, sensitive_fields=False):
+    obj = cls()
+
+    fields_list = cls.get_fields() if sensitive_fields else cls.get_unsensitive_fields()
+
+    for field_name, field_value in data.items():
+      if field_name in fields_list:
+        setattr(obj, field_name, field_value)
+
+    return obj
 
   @classmethod
   def get_table_name(cls):
@@ -60,6 +84,20 @@ class BaseModel:
   def set_storage(cls, value):
     cls.storage = value
 
+  @classmethod
+  def get(cls, id):
+    data = cls.storage.get(cls.table_name, id)
+    if not data:
+      raise NonexistentIDException()
+
+    return cls.from_dictionary(data, sensitive_fields=True)
+
+  @classmethod
+  def find(cls, **fil):
+    data = cls.storage.find(cls.table_name, fil)
+
+    return [cls.from_dictionary(row, sensitive_fields=True) for row in data]
+
   @property
   def dictionary(self):
     return { field_name:getattr(self, field_name) for field_name in self.get_fields() }
@@ -71,6 +109,23 @@ class BaseModel:
   @property
   def unsensitive_dictionary(self):
     return { field_name:getattr(self, field_name) for field_name in self.get_unsensitive_fields() }
+
+  def __str__(self):
+    return f'{self.__class__.__name__}: id {self.id}'
+
+  def __setattr__(self, name, value):
+    if name in self.__dict__.get('fields', {}):
+      self.__dict__['fields'][name].__set__(self, value)
+    else:
+      self.__dict__[name] = value
+
+  def __getattribute__(self, name):
+    if name == '__dict__':
+      return object.__getattribute__(self, '__dict__')
+    elif name in self.__dict__.get('fields', {}):
+      return self.__dict__['fields'][name].__get__(self, None)
+    else:
+      return object.__getattribute__(self, name)
 
   def default(self):
     return self.dictionary

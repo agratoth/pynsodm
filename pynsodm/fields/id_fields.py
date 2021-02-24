@@ -6,11 +6,14 @@ class IDField(BaseField):
     if 'is_primary' not in kwargs:
       kwargs['is_primary'] = True
       kwargs['is_index'] = True
+    
+    if 'is_sensitive' not in kwargs:
+      kwargs['is_sensitive'] = True
 
     BaseField.__init__(self, **kwargs)
 
   def __set__(self, obj, value):
-    self.value = str(value)
+    self.value = str(value) if value else None
 
   def __get__(self, obj, type):
     if not obj:
