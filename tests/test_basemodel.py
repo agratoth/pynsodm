@@ -4,6 +4,7 @@ from pynsodm.rethinkdb_ext import BaseModel
 from pynsodm.fields import StringField
 from pynsodm.exceptions import ListItemException, ValidateException
 from pynsodm.valids import valid_email
+from pynsodm.handlers import salted_sha512_hash_password
 
 
 def test_table_name():
@@ -97,3 +98,12 @@ def test_fill_object_from_dictionary_with_validators_valid_data():
         assert True
     except Exception:
         assert False
+
+
+def test_field_handler():
+    class User(BaseModel):
+        password = StringField(handler=salted_sha512_hash_password)
+
+    user = User(password='123')
+    new_user = User.from_dictionary(user.dictionary)
+    assert user.password == new_user.password

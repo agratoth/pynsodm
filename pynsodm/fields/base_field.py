@@ -52,3 +52,14 @@ class BaseField:
         else:
             self._value = val
         self._is_modified = True
+
+    @property
+    def safety_value(self): return self._value
+
+    @safety_value.setter
+    def safety_value(self, val):
+        if self._valid and not self._valid(val):
+            raise ValidateException()
+
+        self._value = val
+        self._is_modified = True

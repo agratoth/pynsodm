@@ -13,6 +13,7 @@ class BaseModel:
     updated = DatetimeField(is_index=True, is_sensitive=True)
 
     def __init__(self, **kwargs):
+        self._exist_object = False
         self.fields = {}
 
         for field_name, field_value in self.get_fields_values().items():
@@ -29,6 +30,7 @@ class BaseModel:
     @classmethod
     def from_dictionary(cls, data, sensitive_fields=False):
         obj = cls()
+        obj._exist_object = True
 
         fields_list = cls.get_fields() \
             if sensitive_fields \
