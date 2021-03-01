@@ -10,9 +10,12 @@ class StringField(BaseField):
 
     def __set__(self, obj, value):
         str_val = str(value)
-        if len(self._items) > 0 and str_val not in self._items:
-            raise ListItemException()
-        self.value = str_val
+        if not obj._exist_object:
+            if len(self._items) > 0 and str_val not in self._items:
+                raise ListItemException()
+            self.value = str_val
+        else:
+            self.safety_value = str_val
 
     def __get__(self, obj, type):
         if not obj:
