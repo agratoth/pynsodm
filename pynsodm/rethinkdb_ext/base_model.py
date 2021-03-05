@@ -15,6 +15,7 @@ class BaseModel:
     def __init__(self, **kwargs):
         self._exist_object = False
         self.fields = {}
+        self._modified_fields = []
 
         for field_name, field_value in self.get_fields_values().items():
             self.fields[field_name] = copy.deepcopy(field_value)
@@ -101,10 +102,6 @@ class BaseModel:
         return result
 
     @classmethod
-    def get_modified_fields(cls):
-        return [k for k, v in cls.get_fields_values().items() if v.is_modified]
-
-    @classmethod
     def get_primary_index(cls):
         primary_indexes = [
             k for k, v
@@ -184,12 +181,16 @@ class BaseModel:
             field_name: getattr(self, field_name) for field_name
             in self.get_unsensitive_fields()}
 
+    def get_modified_fields(self):
+        return self._modified_fields
+
     def __str__(self):
         return f'{self.__class__.__name__}: id {self.id}'
 
     def __setattr__(self, name, value):
         if name in self.__dict__.get('fields', {}):
             self.__dict__['fields'][name].__set__(self, value)
+            self._modified_fields.append(name)
         else:
             self.__dict__[name] = value
 
