@@ -86,7 +86,8 @@ class Storage:
 
     def insert(self, data_obj):
         obj_data = data_obj.dictionary
-        obj_data.pop('id')
+        if 'id' in obj_data:
+            obj_data.pop('id')
 
         for rel_field in data_obj.get_relation_fields():
             rel_object = obj_data.get(rel_field)
@@ -104,7 +105,8 @@ class Storage:
 
     def update(self, data_obj):
         obj_data = data_obj.modified_dictionary
-        obj_data.pop('id')
+        if 'id' in obj_data:
+            obj_data.pop('id')
 
         for rel_field in data_obj.get_relation_fields():
             rel_object = obj_data.get(rel_field)
