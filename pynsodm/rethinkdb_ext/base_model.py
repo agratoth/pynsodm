@@ -41,6 +41,8 @@ class BaseModel:
             if field_name in fields_list:
                 setattr(obj, field_name, field_value)
 
+        obj._exist_object = False
+
         return obj
 
     @classmethod
